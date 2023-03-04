@@ -1,6 +1,6 @@
 use std::result::Result;
 
-use cqrs_es::Aggregate;
+use cqrs_es::{Aggregate, AggregateError};
 use serde::{Deserialize, Serialize};
 
 use crate::{errors::{AtmError, CheckingError, BankAccountError}, events::BankAccountEvent, commands::BankAccountCommand};
@@ -45,6 +45,9 @@ impl Aggregate for BankAccount {
             },
             BankAccountCommand::WithdrawMoney { amount } => {
                 let balance = self.balance - amount;
+                if balance < 0_f64 {
+                    return Err(BankAccountError("funds not available".to_string()))
+                }
                 Ok(vec![BankAccountEvent::CustomerWithdrewCash { amount, balance }])
             }
             _ => { Ok(vec![]) }
@@ -95,5 +98,16 @@ mod aggregate_tests {
             .given(vec![previous])
             .when(BankAccountCommand::WithdrawMoney { amount: 100.0 })
             .then_expect_events(vec![expected]);
+    }
+
+    #[test]
+    // test widthdraw money funds not available
+    fn test_withdraw_money_funds_not_available() {
+        let msg = BankAccountError("funds not available".to_string());
+        
+        AccountTestFramework::with(BankAccountServices)
+            .given_no_previous_events()
+            .when(BankAccountCommand::WithdrawMoney { amount: 200.0 })
+            .then_expect_error_message(format!("{}", msg).as_str());
     }
 }

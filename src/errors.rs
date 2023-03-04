@@ -1,7 +1,13 @@
 use std::{fmt::Display, error::Error};
 
 #[derive(Debug)]
-pub struct BankAccountError(String);
+pub struct BankAccountError(pub String);
+
+impl BankAccountError {
+    pub fn new(text: String) -> Self {
+        Self(text)
+    }
+}
 
 impl Display for BankAccountError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
