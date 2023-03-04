@@ -7,3 +7,4 @@ pub enum BankAccountCommand {
     WithdrawMoney { amount: f64 },
     WriteCheck { check_number: String, amount: f64 },
 }
+

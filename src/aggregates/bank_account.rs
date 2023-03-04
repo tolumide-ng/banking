@@ -38,7 +38,13 @@ impl Aggregate for BankAccount {
     }
 
     async fn handle(&self, command: Self::Command, services: &Self::Services) -> Result<Vec<Self::Event>, Self::Error>{
-        todo!()
+        match command {
+            BankAccountCommand::DepositMoney { amount } => {
+                let balance = self.balance + amount;
+                Ok(vec![BankAccountEvent::CustomerDepositedMoney { amount, balance }])
+            },
+            _ => { Ok(vec![]) }
+        }
     }
 
     fn apply(&mut self, event: Self::Event) {
@@ -54,5 +60,25 @@ impl Aggregate for BankAccount {
                 self.balance= balance;
             }
         }
+    }
+}
+
+
+
+#[cfg(test)]
+mod aggregate_tests {
+    use super::*;
+    use cqrs_es::test::TestFramework;
+
+    type AccountTestFramework = TestFramework<BankAccount>;
+
+    #[test]
+    fn test_deposit_money() {
+        let expected = BankAccountEvent::CustomerDepositedMoney { amount: 200.0, balance: 200.0 };
+
+        AccountTestFramework::with(BankAccountServices)
+            .given_no_previous_events()
+            .when(BankAccountCommand::DepositMoney { amount: 200.0 })
+            .then_expect_events(vec![expected]);
     }
 }

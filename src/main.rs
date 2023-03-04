@@ -1,7 +1,7 @@
 mod commands;
 mod events;
 mod errors;
-mod services;
+mod aggregates;
 
 
 fn main() {
