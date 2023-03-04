@@ -43,6 +43,10 @@ impl Aggregate for BankAccount {
                 let balance = self.balance + amount;
                 Ok(vec![BankAccountEvent::CustomerDepositedMoney { amount, balance }])
             },
+            BankAccountCommand::WithdrawMoney { amount } => {
+                let balance = self.balance - amount;
+                Ok(vec![BankAccountEvent::CustomerWithdrewCash { amount, balance }])
+            }
             _ => { Ok(vec![]) }
         }
     }
@@ -79,6 +83,17 @@ mod aggregate_tests {
         AccountTestFramework::with(BankAccountServices)
             .given_no_previous_events()
             .when(BankAccountCommand::DepositMoney { amount: 200.0 })
+            .then_expect_events(vec![expected]);
+    }
+
+    #[test]
+    fn test_withdrawal_money() {
+        let previous = BankAccountEvent::CustomerDepositedMoney { amount: 200.0, balance: 200.0 };
+        let expected = BankAccountEvent::CustomerWithdrewCash { amount: 100.0, balance: 100.0 };
+
+        AccountTestFramework::with(BankAccountServices)
+            .given(vec![previous])
+            .when(BankAccountCommand::WithdrawMoney { amount: 100.0 })
             .then_expect_events(vec![expected]);
     }
 }
